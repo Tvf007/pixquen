@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Transaction } from '../types';
 import { createDeposit, getDepositStatus } from '../api';
 import { getConfig, saveTransaction, updateTransaction, formatCurrency, generateId } from '../store';
-import { generateShareMessage, checkRateLimit, logAudit, sanitizeString } from '../security';
+import { generateShareMessage, checkRateLimit, logAudit } from '../security';
 
 interface PagamentoProps {
   amount: number;
@@ -27,7 +27,6 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
   const initiatePayment = async () => {
     setLoading(true);
     
-    // Verificar rate limiting
     if (!checkRateLimit('transaction')) {
       setError('Limite de transações por hora excedido. Aguarde antes de criar nova cobrança.');
       setLoading(false);
@@ -54,7 +53,6 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
         saveTransaction(tx);
         logAudit('payment_created', `Cobrança criada: ${formatCurrency(amount)} - ID: ${tx.depositId}`, 'info');
 
-        // Iniciar polling para verificar pagamento
         startPolling(response.data.id);
       } else {
         setError(response.message || 'Erro ao criar pagamento');
@@ -134,25 +132,52 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const containerStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    backgroundColor: '#030712',
+    color: '#ffffff',
+    overflow: 'hidden',
+  };
+
+  const headerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 16px',
+    backgroundColor: 'rgba(17, 24, 39, 0.8)',
+    borderBottom: '1px solid #1f2937',
+  };
+
+  const contentStyle: React.CSSProperties = {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '16px',
+    overflowY: 'auto',
+  };
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden" style={{ height: '100vh' }}>
-        <div className="w-16 h-16 border-4 border-green-500/30 border-t-green-500 rounded-full animate-spin mb-6"></div>
-        <p className="text-gray-400 text-lg">Gerando cobrança...</p>
-        <p className="text-gray-600 text-sm mt-2">{formatCurrency(amount)}</p>
+      <div style={{ ...containerStyle, alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '64px', height: '64px', border: '4px solid rgba(16, 185, 129, 0.3)', borderTopColor: '#10b981', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '24px' }}></div>
+        <p style={{ color: '#9ca3af', fontSize: '18px' }}>Gerando cobrança...</p>
+        <p style={{ color: '#6b7280', fontSize: '14px', marginTop: '8px' }}>{formatCurrency(amount)}</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden" style={{ height: '100vh' }}>
-        <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
-          <span className="text-3xl">❌</span>
+      <div style={{ ...containerStyle, alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ width: '64px', height: '64px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', fontSize: '32px' }}>
+          ❌
         </div>
-        <h2 className="text-xl font-bold text-red-400 mb-2">Erro</h2>
-        <p className="text-gray-400 text-center mb-6">{error}</p>
-        <button onClick={onBack} className="px-6 py-3 bg-gray-800 rounded-xl text-white font-medium hover:bg-gray-700 transition-colors">
+        <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#f87171', marginBottom: '8px' }}>Erro</h2>
+        <p style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '24px' }}>{error}</p>
+        <button onClick={onBack} style={{ padding: '12px 24px', backgroundColor: '#1f2937', color: '#ffffff', borderRadius: '12px', fontWeight: 500, border: 'none', cursor: 'pointer' }}>
           Voltar
         </button>
       </div>
@@ -161,102 +186,87 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
 
   if (paid) {
     return (
-      <div className="flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden" style={{ height: '100vh' }}>
-        <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
-          <span className="text-4xl">✅</span>
+      <div style={{ ...containerStyle, alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ width: '80px', height: '80px', backgroundColor: 'rgba(16, 185, 129, 0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', fontSize: '40px' }}>
+          ✅
         </div>
-        <h2 className="text-2xl font-bold text-green-400 mb-2">Pagamento Confirmado!</h2>
-        <p className="text-gray-400 text-center mb-2">{formatCurrency(transaction!.amount)}</p>
-        <p className="text-gray-600 text-sm text-center mb-8">O pagamento via PIX foi recebido com sucesso.</p>
-        
-        <div className="w-full max-w-sm space-y-3">
-          <button
-            onClick={onBack}
-            className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition-all"
-          >
-            Nova Cobrança
-          </button>
-        </div>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#34d399', marginBottom: '8px' }}>Pagamento Confirmado!</h2>
+        <p style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '8px' }}>{formatCurrency(transaction!.amount)}</p>
+        <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center', marginBottom: '32px' }}>O pagamento via PIX foi recebido com sucesso.</p>
+        <button
+          onClick={onBack}
+          style={{ width: '100%', maxWidth: '400px', padding: '12px', background: 'linear-gradient(to right, #10b981, #059669)', color: '#ffffff', borderRadius: '12px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}
+        >
+          Nova Cobrança
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col bg-gray-950 overflow-hidden" style={{ height: '100vh' }}>
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800">
-        <button onClick={onBack} className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+    <div style={containerStyle}>
+      <header style={headerStyle}>
+        <button onClick={onBack} style={{ padding: '8px', borderRadius: '8px', background: 'transparent', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '20px' }}>
+          ←
         </button>
-        <span className="font-medium text-gray-200">Cobrança PIX</span>
-        <div className="w-9"></div>
+        <span style={{ fontWeight: 500, color: '#e5e7eb' }}>Cobrança PIX</span>
+        <div style={{ width: '36px' }}></div>
       </header>
 
-      <div className="flex-1 flex flex-col items-center px-4 py-4 overflow-y-auto min-h-0">
-        {/* Valor */}
-        <div className="text-center mb-6">
-          <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Valor a pagar</p>
-          <p className="text-4xl font-bold text-white">{formatCurrency(amount)}</p>
+      <div style={contentStyle}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <p style={{ color: '#6b7280', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Valor a pagar</p>
+          <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#ffffff' }}>{formatCurrency(amount)}</p>
         </div>
 
-        {/* QR Code */}
-        <div className="bg-white rounded-2xl p-4 mb-6 shadow-xl shadow-black/30">
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '16px', marginBottom: '24px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)' }}>
           {transaction?.pixQrCodeBase64 ? (
             <img
               src={`data:image/png;base64,${transaction.pixQrCodeBase64}`}
               alt="QR Code PIX"
-              className="w-52 h-52"
+              style={{ width: '208px', height: '208px' }}
             />
           ) : (
-            <div className="w-52 h-52 flex items-center justify-center bg-gray-100 rounded-lg">
-              <div className="text-center">
-                <div className="text-5xl mb-2">📱</div>
-                <p className="text-gray-500 text-xs">QR Code gerado pela API</p>
-                <p className="text-gray-400 text-[10px] mt-1">Configure a API Key para QR real</p>
+            <div style={{ width: '208px', height: '208px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6', borderRadius: '8px' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '48px', marginBottom: '8px' }}>📱</div>
+                <p style={{ color: '#6b7280', fontSize: '12px' }}>QR Code gerado pela API</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Status */}
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-          <span className="text-yellow-400 text-sm">Aguardando pagamento...</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+          <div style={{ width: '8px', height: '8px', backgroundColor: '#facc15', borderRadius: '50%', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+          <span style={{ color: '#facc15', fontSize: '14px' }}>Aguardando pagamento...</span>
         </div>
 
-        {/* PIX Copia e Cola */}
-        <div className="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-xl p-4 mb-4">
-          <p className="text-xs text-gray-500 mb-2">PIX Copia e Cola</p>
-          <p className="text-xs text-gray-400 font-mono truncate">
+        <div style={{ width: '100%', maxWidth: '400px', backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+          <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>PIX Copia e Cola</p>
+          <p style={{ fontSize: '12px', color: '#9ca3af', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {transaction?.pixQrCode?.substring(0, 50) || 'Código PIX...'}...
           </p>
           <button
             onClick={copyPixCode}
-            className="mt-3 w-full py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-300 transition-colors"
+            style={{ marginTop: '12px', width: '100%', padding: '8px', backgroundColor: '#1f2937', borderRadius: '8px', fontSize: '14px', color: '#d1d5db', border: 'none', cursor: 'pointer' }}
           >
             {copied ? '✅ Copiado!' : '📋 Copiar código PIX'}
           </button>
         </div>
 
-        {/* Compartilhamento */}
-        <div className="w-full max-w-sm space-y-2">
-          <p className="text-xs text-gray-500 text-center mb-2">Compartilhar cobrança</p>
+        <div style={{ width: '100%', maxWidth: '400px' }}>
+          <p style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', marginBottom: '8px' }}>Compartilhar cobrança</p>
           
           <button
             onClick={shareWhatsApp}
-            className="w-full py-3 bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+            style={{ width: '100%', padding: '12px', backgroundColor: '#25D366', color: '#ffffff', borderRadius: '12px', fontWeight: 500, fontSize: '14px', border: 'none', cursor: 'pointer', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-            </svg>
-            Compartilhar no WhatsApp
+            📱 Compartilhar no WhatsApp
           </button>
 
           <button
             onClick={copyLink}
-            className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors border border-gray-700"
+            style={{ width: '100%', padding: '12px', backgroundColor: '#1f2937', color: '#d1d5db', borderRadius: '12px', fontWeight: 500, fontSize: '14px', border: '1px solid #374151', cursor: 'pointer', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
             {copied ? '✅ Link copiado!' : '🔗 Copiar link de pagamento'}
           </button>
@@ -267,22 +277,21 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
               const link = `${window.location.origin}?pay=${transaction.depositId}&amount=${transaction.amount}`;
               window.open(link, '_blank');
             }}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+            style={{ width: '100%', padding: '12px', backgroundColor: '#2563eb', color: '#ffffff', borderRadius: '12px', fontWeight: 500, fontSize: '14px', border: 'none', cursor: 'pointer', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
             🌐 Abrir link de pagamento
           </button>
 
           <button
             onClick={shareLink}
-            className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors border border-gray-700"
+            style={{ width: '100%', padding: '12px', backgroundColor: '#1f2937', color: '#d1d5db', borderRadius: '12px', fontWeight: 500, fontSize: '14px', border: '1px solid #374151', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
             📤 Compartilhar
           </button>
         </div>
 
-        {/* Expira em */}
         {transaction?.expiresAt && (
-          <p className="text-gray-600 text-xs mt-6 text-center">
+          <p style={{ color: '#6b7280', fontSize: '12px', marginTop: '24px', textAlign: 'center' }}>
             Este QR Code expira em {new Date(transaction.expiresAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
           </p>
         )}

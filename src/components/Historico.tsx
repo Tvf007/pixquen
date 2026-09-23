@@ -26,90 +26,114 @@ export default function Historico({ onViewComprovante, onBack }: HistoricoProps)
     .reduce((sum, t) => sum + t.amount, 0);
 
   const statusBadge = (status: string) => {
-    const map: Record<string, { label: string; class: string }> = {
-      pending: { label: 'Pendente', class: 'bg-yellow-500/20 text-yellow-400' },
-      depix_sent: { label: 'Pago', class: 'bg-green-500/20 text-green-400' },
-      completed: { label: 'Pago', class: 'bg-green-500/20 text-green-400' },
-      expired: { label: 'Expirado', class: 'bg-gray-500/20 text-gray-400' },
-      canceled: { label: 'Cancelado', class: 'bg-red-500/20 text-red-400' },
-      error: { label: 'Erro', class: 'bg-red-500/20 text-red-400' },
-      under_review: { label: 'Em análise', class: 'bg-blue-500/20 text-blue-400' },
-      refunded: { label: 'Reembolsado', class: 'bg-purple-500/20 text-purple-400' },
+    const map: Record<string, { label: string; bg: string; color: string }> = {
+      pending: { label: 'Pendente', bg: 'rgba(234, 179, 8, 0.2)', color: '#facc15' },
+      depix_sent: { label: 'Pago', bg: 'rgba(16, 185, 129, 0.2)', color: '#34d399' },
+      completed: { label: 'Pago', bg: 'rgba(16, 185, 129, 0.2)', color: '#34d399' },
+      expired: { label: 'Expirado', bg: 'rgba(107, 114, 128, 0.2)', color: '#9ca3af' },
+      canceled: { label: 'Cancelado', bg: 'rgba(239, 68, 68, 0.2)', color: '#f87171' },
+      error: { label: 'Erro', bg: 'rgba(239, 68, 68, 0.2)', color: '#f87171' },
+      under_review: { label: 'Em análise', bg: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa' },
+      refunded: { label: 'Reembolsado', bg: 'rgba(168, 85, 247, 0.2)', color: '#c084fc' },
     };
-    const s = map[status] || { label: status, class: 'bg-gray-500/20 text-gray-400' };
-    return <span className={`text-xs px-2 py-0.5 rounded-full ${s.class}`}>{s.label}</span>;
+    const s = map[status] || { label: status, bg: 'rgba(107, 114, 128, 0.2)', color: '#9ca3af' };
+    return <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '12px', backgroundColor: s.bg, color: s.color }}>{s.label}</span>;
+  };
+
+  const containerStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    backgroundColor: '#030712',
+    color: '#ffffff',
+    overflow: 'hidden',
+  };
+
+  const headerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 16px',
+    backgroundColor: 'rgba(17, 24, 39, 0.8)',
+    borderBottom: '1px solid #1f2937',
+    flexShrink: 0,
   };
 
   return (
-    <div className="flex flex-col bg-gray-950 overflow-hidden" style={{ height: '100vh' }}>
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 flex-shrink-0 safe-top">
-        <button onClick={onBack} className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+    <div style={containerStyle}>
+      <header style={headerStyle}>
+        <button onClick={onBack} style={{ padding: '8px', borderRadius: '8px', background: 'transparent', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '20px' }}>
+          ←
         </button>
-        <span className="font-medium text-gray-200">Histórico</span>
-        <div className="w-9"></div>
+        <span style={{ fontWeight: 500, color: '#e5e7eb' }}>Histórico</span>
+        <div style={{ width: '36px' }}></div>
       </header>
 
-      {/* Conteúdo com scroll */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Resumo */}
-        <div className="px-4 py-4">
-          <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Total recebido</p>
-            <p className="text-2xl font-bold text-green-400 mt-1">{formatCurrency(totalCompleted)}</p>
-            <p className="text-xs text-gray-500 mt-1">{transactions.filter(t => t.status === 'completed' || t.status === 'depix_sent').length} transações concluídas</p>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ padding: '16px' }}>
+          <div style={{ background: 'linear-gradient(to right, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1))', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '12px', padding: '16px' }}>
+            <p style={{ fontSize: '12px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total recebido</p>
+            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#34d399', marginTop: '4px' }}>{formatCurrency(totalCompleted)}</p>
+            <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>{transactions.filter(t => t.status === 'completed' || t.status === 'depix_sent').length} transações concluídas</p>
           </div>
         </div>
 
-      {/* Filtros */}
-      <div className="px-4 flex gap-2 mb-4">
-        {[
-          { key: 'all', label: 'Todos' },
-          { key: 'completed', label: 'Pagos' },
-          { key: 'pending', label: 'Pendentes' },
-        ].map(f => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key as typeof filter)}
-            className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              filter === f.key
-                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                : 'bg-gray-800 text-gray-400 hover:text-gray-300'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+        <div style={{ padding: '0 16px', display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          {[
+            { key: 'all', label: 'Todos' },
+            { key: 'completed', label: 'Pagos' },
+            { key: 'pending', label: 'Pendentes' },
+          ].map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key as typeof filter)}
+              style={{
+                padding: '6px 16px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: 500,
+                border: filter === f.key ? '1px solid rgba(16, 185, 129, 0.3)' : 'none',
+                backgroundColor: filter === f.key ? 'rgba(16, 185, 129, 0.2)' : '#1f2937',
+                color: filter === f.key ? '#34d399' : '#9ca3af',
+                cursor: 'pointer',
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
 
-        {/* Lista */}
-        <div className="px-4 pb-6 space-y-2">
+        <div style={{ padding: '0 16px 24px' }}>
           {filtered.length === 0 ? (
-            <div className="text-center py-12">
-              <span className="text-4xl block mb-3">📋</span>
-              <p className="text-gray-500">Nenhuma transação encontrada</p>
+            <div style={{ textAlign: 'center', padding: '48px 0' }}>
+              <span style={{ fontSize: '48px', display: 'block', marginBottom: '12px' }}>📋</span>
+              <p style={{ color: '#6b7280' }}>Nenhuma transação encontrada</p>
             </div>
           ) : (
             filtered.map(tx => (
               <button
                 key={tx.id}
                 onClick={() => (tx.status === 'completed' || tx.status === 'depix_sent') && onViewComprovante(tx)}
-                className={`w-full text-left bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700 transition-colors ${
-                  (tx.status === 'completed' || tx.status === 'depix_sent') ? 'cursor-pointer' : 'cursor-default'
-                }`}
+                style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  backgroundColor: '#111827',
+                  border: '1px solid #1f2937',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  marginBottom: '8px',
+                  cursor: (tx.status === 'completed' || tx.status === 'depix_sent') ? 'pointer' : 'default',
+                }}
               >
-                <div className="flex items-center justify-between">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <p className="text-lg font-bold text-white">{formatCurrency(tx.amount)}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{formatDate(tx.createdAt)}</p>
+                    <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#ffffff' }}>{formatCurrency(tx.amount)}</p>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>{formatDate(tx.createdAt)}</p>
                   </div>
-                  <div className="text-right">
+                  <div style={{ textAlign: 'right' }}>
                     {statusBadge(tx.status)}
                     {(tx.status === 'completed' || tx.status === 'depix_sent') && (
-                      <p className="text-xs text-gray-500 mt-1">Ver comprovante →</p>
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>Ver comprovante →</p>
                     )}
                   </div>
                 </div>
