@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste React</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #030712;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #10b981;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #9ca3af;
+            margin-bottom: 10px;
+        }
+        .success {
+            color: #34d399;
+            font-size: 24px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ HTML Funcionando</h1>
+        <p>Se você está vendo esta página, o HTML e CSS estão funcionando.</p>
+        <p>Agora vamos testar se o React está carregando...</p>
+        <div id="test"></div>
+    </div>
+    
+    <script type="module">
+        // Teste simples de JavaScript
+        document.getElementById('test').innerHTML = '<p class="success">✅ JavaScript Funcionando</p>';
+        
+        // Verificar se o arquivo principal existe
+        fetch('./assets/index-B__yscJw.js')
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ Arquivo JS encontrado');
+                    document.getElementById('test').innerHTML += '<p class="success">✅ Arquivo JS carregado</p>';
+                } else {
+                    console.error('❌ Arquivo JS não encontrado');
+                    document.getElementById('test').innerHTML += '<p style="color: #f87171;">❌ Arquivo JS não encontrado</p>';
+                }
+            })
+            .catch(error => {
+                console.error('❌ Erro ao carregar JS:', error);
+                document.getElementById('test').innerHTML += '<p style="color: #f87171;">❌ Erro: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>
