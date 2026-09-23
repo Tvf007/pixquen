@@ -103,9 +103,9 @@ export default function Configuracoes({ onBack }: ConfiguracoesProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="h-[100dvh] flex flex-col bg-gray-950 overflow-hidden">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-10">
+      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 flex-shrink-0 safe-top">
         <button onClick={onBack} className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">
           <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -115,7 +115,7 @@ export default function Configuracoes({ onBack }: ConfiguracoesProps) {
         <div className="w-9"></div>
       </header>
 
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6 max-w-md mx-auto w-full space-y-6">
         {/* Business name */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
           <label className="text-sm font-medium text-gray-300 mb-2 block">
@@ -381,13 +381,13 @@ export default function Configuracoes({ onBack }: ConfiguracoesProps) {
           </div>
         </div>
 
-        {/* Demo mode info */}
-        {!config.apiKey && (
-          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-yellow-400 mb-2">⚠️ Modo Demonstração</h3>
-            <p className="text-xs text-yellow-400/80">
-              Sem API Key configurada, o app funciona em modo demonstração. 
-              Os pagamentos serão simulados localmente. Configure sua chave BuyPix para usar a integração real.
+        {/* API Key info */}
+        {config.apiKey && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-green-400 mb-2">✅ API Configurada</h3>
+            <p className="text-xs text-green-400/80">
+              Sua API Key está configurada e o aplicativo está operando em modo real.
+              As transações serão processadas pela API BuyPix.
             </p>
           </div>
         )}

@@ -41,9 +41,9 @@ export default function Historico({ onViewComprovante, onBack }: HistoricoProps)
   };
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="h-[100dvh] flex flex-col bg-gray-950 overflow-hidden">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-10">
+      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 flex-shrink-0 safe-top">
         <button onClick={onBack} className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">
           <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -53,14 +53,16 @@ export default function Historico({ onViewComprovante, onBack }: HistoricoProps)
         <div className="w-9"></div>
       </header>
 
-      {/* Resumo */}
-      <div className="px-4 py-4">
-        <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wider">Total recebido</p>
-          <p className="text-2xl font-bold text-green-400 mt-1">{formatCurrency(totalCompleted)}</p>
-          <p className="text-xs text-gray-500 mt-1">{transactions.filter(t => t.status === 'completed' || t.status === 'depix_sent').length} transações concluídas</p>
+      {/* Conteúdo com scroll */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Resumo */}
+        <div className="px-4 py-4">
+          <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-4">
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Total recebido</p>
+            <p className="text-2xl font-bold text-green-400 mt-1">{formatCurrency(totalCompleted)}</p>
+            <p className="text-xs text-gray-500 mt-1">{transactions.filter(t => t.status === 'completed' || t.status === 'depix_sent').length} transações concluídas</p>
+          </div>
         </div>
-      </div>
 
       {/* Filtros */}
       <div className="px-4 flex gap-2 mb-4">
@@ -83,37 +85,38 @@ export default function Historico({ onViewComprovante, onBack }: HistoricoProps)
         ))}
       </div>
 
-      {/* Lista */}
-      <div className="px-4 pb-6 space-y-2">
-        {filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <span className="text-4xl block mb-3">📋</span>
-            <p className="text-gray-500">Nenhuma transação encontrada</p>
-          </div>
-        ) : (
-          filtered.map(tx => (
-            <button
-              key={tx.id}
-              onClick={() => (tx.status === 'completed' || tx.status === 'depix_sent') && onViewComprovante(tx)}
-              className={`w-full text-left bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700 transition-colors ${
-                (tx.status === 'completed' || tx.status === 'depix_sent') ? 'cursor-pointer' : 'cursor-default'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-lg font-bold text-white">{formatCurrency(tx.amount)}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{formatDate(tx.createdAt)}</p>
+        {/* Lista */}
+        <div className="px-4 pb-6 space-y-2">
+          {filtered.length === 0 ? (
+            <div className="text-center py-12">
+              <span className="text-4xl block mb-3">📋</span>
+              <p className="text-gray-500">Nenhuma transação encontrada</p>
+            </div>
+          ) : (
+            filtered.map(tx => (
+              <button
+                key={tx.id}
+                onClick={() => (tx.status === 'completed' || tx.status === 'depix_sent') && onViewComprovante(tx)}
+                className={`w-full text-left bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700 transition-colors ${
+                  (tx.status === 'completed' || tx.status === 'depix_sent') ? 'cursor-pointer' : 'cursor-default'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-lg font-bold text-white">{formatCurrency(tx.amount)}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{formatDate(tx.createdAt)}</p>
+                  </div>
+                  <div className="text-right">
+                    {statusBadge(tx.status)}
+                    {(tx.status === 'completed' || tx.status === 'depix_sent') && (
+                      <p className="text-xs text-gray-500 mt-1">Ver comprovante →</p>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right">
-                  {statusBadge(tx.status)}
-                  {(tx.status === 'completed' || tx.status === 'depix_sent') && (
-                    <p className="text-xs text-gray-500 mt-1">Ver comprovante →</p>
-                  )}
-                </div>
-              </div>
-            </button>
-          ))
-        )}
+              </button>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

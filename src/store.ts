@@ -30,7 +30,19 @@ export function updateTransaction(id: string, updates: Partial<Transaction>): vo
 
 export function getConfig(): AppConfig {
   const data = localStorage.getItem(CONFIG_KEY);
-  return data ? JSON.parse(data) : { apiKey: '', businessName: 'Minha Loja' };
+  if (data) {
+    return JSON.parse(data);
+  }
+  
+  // Configuração inicial com API key
+  const defaultConfig: AppConfig = {
+    apiKey: 'bpx_J0BLBU3O1DMRIzAFiVqi5tzupEAPdqjmb2KBggAv',
+    businessName: 'Minha Loja',
+  };
+  
+  // Salvar configuração padrão
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(defaultConfig));
+  return defaultConfig;
 }
 
 export function saveConfig(config: AppConfig): void {

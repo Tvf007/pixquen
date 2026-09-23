@@ -42,9 +42,9 @@ export default function Comprovante({ transaction, onBack }: ComprovanteProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="h-[100dvh] flex flex-col bg-gray-950 overflow-hidden">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-10">
+      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 flex-shrink-0 safe-top">
         <button onClick={onBack} className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">
           <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -58,7 +58,7 @@ export default function Comprovante({ transaction, onBack }: ComprovanteProps) {
         </button>
       </header>
 
-      <div className="px-4 py-6 max-w-md mx-auto">
+      <div className="flex-1 overflow-y-auto px-4 py-6 max-w-md mx-auto w-full">
         {/* Receipt Card */}
         <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
           {/* Header */}

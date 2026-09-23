@@ -59,12 +59,12 @@ export default function Maquininha({ onPaymentCreated, onNavigate }: MaquininhaP
   const isValidAmount = numericValue >= config.minAmountPerTransaction && numericValue <= config.maxAmountPerTransaction;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-950">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800">
+    <div className="h-[100dvh] flex flex-col bg-gray-950 overflow-hidden">
+      {/* Header compacto */}
+      <header className="flex items-center justify-between px-4 py-2 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 flex-shrink-0 safe-top">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xs">PIX</span>
+          <div className="w-7 h-7 bg-gradient-to-br from-green-400 to-emerald-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-[10px]">PIX</span>
           </div>
           <span className="font-bold text-sm text-gray-200">Maquininha</span>
         </div>
@@ -100,30 +100,30 @@ export default function Maquininha({ onPaymentCreated, onNavigate }: MaquininhaP
         </div>
       </header>
 
-      {/* Display do valor */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <p className="text-gray-500 text-sm mb-2 uppercase tracking-wider">Valor da venda</p>
+      {/* Display do valor - ocupa espaço disponível */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0">
+        <p className="text-gray-500 text-xs mb-1 uppercase tracking-wider">Valor da venda</p>
         <div className="text-center">
-          <span className="text-gray-500 text-2xl font-light">R$</span>
-          <span className="text-white text-6xl md:text-7xl font-bold ml-2 tabular-nums">
+          <span className="text-gray-500 text-xl font-light">R$</span>
+          <span className="text-white text-5xl md:text-6xl font-bold ml-2 tabular-nums">
             {numericValue.toFixed(2)}
           </span>
         </div>
         {numericValue > 0 && numericValue < config.minAmountPerTransaction && (
-          <p className="text-red-400 text-xs mt-3 animate-pulse">
-            ⚠️ Valor mínimo: {formatCurrency(config.minAmountPerTransaction)}
+          <p className="text-red-400 text-xs mt-2 animate-pulse">
+            ⚠️ Mínimo: {formatCurrency(config.minAmountPerTransaction)}
           </p>
         )}
         {numericValue >= config.minAmountPerTransaction && (
-          <p className="text-green-400 text-xs mt-3">
-            ✓ Valor válido para cobrança
+          <p className="text-green-400 text-xs mt-2">
+            ✓ Valor válido
           </p>
         )}
       </div>
 
-      {/* Teclado numérico */}
-      <div className="px-4 pb-6">
-        <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+      {/* Teclado numérico e botões - parte inferior fixa */}
+      <div className="px-4 pb-4 flex-shrink-0 safe-bottom">
+        <div className="grid grid-cols-3 gap-1.5 max-w-xs mx-auto">
           {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'].map((key) => (
             <button
               key={key}
@@ -132,32 +132,32 @@ export default function Maquininha({ onPaymentCreated, onNavigate }: MaquininhaP
                 else if (key === '.') handleDecimal();
                 else handleDigit(key);
               }}
-              className="h-14 rounded-xl bg-gray-800/80 hover:bg-gray-700 active:bg-gray-600 text-white text-xl font-medium transition-all active:scale-95 border border-gray-700/50"
+              className="h-12 rounded-lg bg-gray-800/80 hover:bg-gray-700 active:bg-gray-600 text-white text-lg font-medium transition-all active:scale-95 border border-gray-700/50"
             >
               {key}
             </button>
           ))}
         </div>
-        
+
         {/* Aviso de valor mínimo */}
-        <div className="max-w-xs mx-auto mt-3 px-3 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-          <p className="text-[10px] text-yellow-400 text-center">
-            💡 Valor mínimo para cobrança: <strong>R$ 50,00</strong>
+        <div className="max-w-xs mx-auto mt-2 px-2 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded">
+          <p className="text-[9px] text-yellow-400 text-center">
+            💡 Mínimo: <strong>R$ 50,00</strong>
           </p>
         </div>
 
         {/* Botões de ação */}
-        <div className="flex gap-3 mt-4 max-w-xs mx-auto">
+        <div className="flex gap-2 mt-2 max-w-xs mx-auto">
           <button
             onClick={handleClear}
-            className="flex-1 h-12 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium text-sm transition-all border border-red-500/20"
+            className="flex-1 h-11 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium text-xs transition-all border border-red-500/20"
           >
             Limpar
           </button>
           <button
             onClick={handleConfirm}
             disabled={!isValidAmount}
-            className="flex-[2] h-12 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-sm transition-all shadow-lg shadow-green-500/25 hover:from-green-600 hover:to-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+            className="flex-[2] h-11 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xs transition-all shadow-lg shadow-green-500/25 hover:from-green-600 hover:to-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
           >
             {isValidAmount ? `COBRAR ${formatCurrency(numericValue)}` : `MÍNIMO ${formatCurrency(config.minAmountPerTransaction)}`}
           </button>

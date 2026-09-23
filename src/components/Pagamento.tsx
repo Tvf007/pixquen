@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Transaction } from '../types';
-import { createDeposit, createDemoDeposit, getDepositStatus, simulatePayment } from '../api';
+import { createDeposit, getDepositStatus } from '../api';
 import { getConfig, saveTransaction, updateTransaction, formatCurrency, generateId } from '../store';
 import { generateShareMessage, checkRateLimit, logAudit, sanitizeString } from '../security';
 
@@ -16,8 +16,6 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
   const [paid, setPaid] = useState(false);
   const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const isDemo = !getConfig().apiKey;
 
   useEffect(() => {
     initiatePayment();
@@ -37,13 +35,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
     }
     
     try {
-      let response;
-      if (isDemo) {
-        // Modo demo - simula a resposta
-        response = createDemoDeposit(amount);
-      } else {
-        response = await createDeposit({ amount });
-      }
+      const response = await createDeposit({ amount });
 
       if (response.success && response.data) {
         const tx: Transaction = {
@@ -76,18 +68,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
   const startPolling = (depositId: string) => {
     pollRef.current = setInterval(async () => {
       try {
-        let statusResponse;
-        if (isDemo) {
-          // No modo demo, simula pagamento após 15 segundos
-          const elapsed = Date.now() - (transaction ? new Date(transaction.createdAt).getTime() : Date.now());
-          if (elapsed > 15000) {
-            statusResponse = simulatePayment();
-          } else {
-            return;
-          }
-        } else {
-          statusResponse = await getDepositStatus(depositId);
-        }
+        const statusResponse = await getDepositStatus(depositId);
 
         if (statusResponse.success && statusResponse.data) {
           const newStatus = statusResponse.data.status as Transaction['status'];
@@ -155,7 +136,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 px-6">
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden">
         <div className="w-16 h-16 border-4 border-green-500/30 border-t-green-500 rounded-full animate-spin mb-6"></div>
         <p className="text-gray-400 text-lg">Gerando cobrança...</p>
         <p className="text-gray-600 text-sm mt-2">{formatCurrency(amount)}</p>
@@ -165,7 +146,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 px-6">
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden">
         <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
           <span className="text-3xl">❌</span>
         </div>
@@ -180,7 +161,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
 
   if (paid) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 px-6">
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden">
         <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
           <span className="text-4xl">✅</span>
         </div>
@@ -201,7 +182,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-950">
+    <div className="h-[100dvh] flex flex-col bg-gray-950 overflow-hidden">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800">
         <button onClick={onBack} className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">
@@ -213,14 +194,11 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
         <div className="w-9"></div>
       </header>
 
-      <div className="flex-1 flex flex-col items-center px-4 py-6 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center px-4 py-4 overflow-y-auto min-h-0">
         {/* Valor */}
         <div className="text-center mb-6">
           <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Valor a pagar</p>
           <p className="text-4xl font-bold text-white">{formatCurrency(amount)}</p>
-          {isDemo && (
-            <p className="text-yellow-400/70 text-xs mt-2">⚠️ Modo demonstração — configure a API Key nas configurações</p>
-          )}
         </div>
 
         {/* QR Code */}
