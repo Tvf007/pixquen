@@ -59,7 +59,7 @@ export default function Maquininha({ onPaymentCreated, onNavigate }: MaquininhaP
   const isValidAmount = numericValue >= config.minAmountPerTransaction && numericValue <= config.maxAmountPerTransaction;
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gray-950 overflow-hidden">
+    <div className="flex flex-col bg-gray-950 overflow-hidden" style={{ height: '100vh' }}>
       {/* Header compacto */}
       <header className="flex items-center justify-between px-4 py-2 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 flex-shrink-0 safe-top">
         <div className="flex items-center gap-2">

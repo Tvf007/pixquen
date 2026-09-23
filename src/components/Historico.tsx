@@ -41,7 +41,7 @@ export default function Historico({ onViewComprovante, onBack }: HistoricoProps)
   };
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gray-950 overflow-hidden">
+    <div className="flex flex-col bg-gray-950 overflow-hidden" style={{ height: '100vh' }}>
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 flex-shrink-0 safe-top">
         <button onClick={onBack} className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">

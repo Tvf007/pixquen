@@ -49,7 +49,7 @@ function App() {
   };
 
   return (
-    <div className="h-[100dvh] bg-gray-950 text-white overflow-hidden">
+    <div className="h-screen bg-gray-950 text-white overflow-hidden" style={{ height: '100vh' }}>
       {renderPage()}
     </div>
   );
