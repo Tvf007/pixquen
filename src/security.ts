@@ -446,21 +446,16 @@ export function isFramed(): boolean {
 
 /**
  * Adiciona headers de segurança via meta tags
+ * NOTA: CSP e X-Frame-Options devem ser configurados via headers HTTP no servidor em produção
+ * Meta tags CSP podem bloquear a execução do JavaScript em aplicações SPA
  */
 export function applySecurityHeaders(): void {
-  // Prevenir clickjacking
-  if (!isFramed()) {
-    const meta = document.createElement('meta');
-    meta.httpEquiv = 'X-Frame-Options';
-    meta.content = 'DENY';
-    document.head.appendChild(meta);
-  }
-
-  // CSP básica
-  const csp = document.createElement('meta');
-  csp.httpEquiv = 'Content-Security-Policy';
-  csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://buypix.me https://wa.me;";
-  document.head.appendChild(csp);
+  // Em produção, configure estes headers no servidor:
+  // X-Frame-Options: DENY
+  // Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; ...
+  
+  // Não adicionar meta tags CSP - pode quebrar aplicações React/Vite
+  // A segurança deve ser implementada no nível do servidor em produção
 }
 
 // ============================================
