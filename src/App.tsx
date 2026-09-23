@@ -1,56 +1,19 @@
-import { useState } from 'react';
-import { Page, Transaction } from './types';
-import Maquininha from './components/Maquininha';
-import Pagamento from './components/Pagamento';
-import Historico from './components/Historico';
-import Relatorios from './components/Relatorios';
-import Comprovante from './components/Comprovante';
-import Configuracoes from './components/Configuracoes';
-
 function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('maquininha');
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [currentAmount, setCurrentAmount] = useState(0);
-
-  const handlePaymentCreated = (amount: number) => {
-    setCurrentAmount(amount);
-    setCurrentPage('pagamento');
-  };
-
-  const handleViewComprovante = (tx: Transaction) => {
-    setSelectedTransaction(tx);
-    setCurrentPage('comprovante');
-  };
-
-  const handleBack = () => {
-    setCurrentPage('maquininha');
-    setCurrentAmount(0);
-  };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'maquininha':
-        return <Maquininha onPaymentCreated={handlePaymentCreated} onNavigate={setCurrentPage} />;
-      case 'pagamento':
-        return <Pagamento amount={currentAmount} onBack={handleBack} />;
-      case 'historico':
-        return <Historico onViewComprovante={handleViewComprovante} onBack={() => setCurrentPage('maquininha')} />;
-      case 'relatorios':
-        return <Relatorios onViewComprovante={handleViewComprovante} onBack={() => setCurrentPage('maquininha')} />;
-      case 'comprovante':
-        return selectedTransaction ? (
-          <Comprovante transaction={selectedTransaction} onBack={() => setCurrentPage('historico')} />
-        ) : null;
-      case 'configuracoes':
-        return <Configuracoes onBack={() => setCurrentPage('maquininha')} />;
-      default:
-        return <Maquininha onPaymentCreated={handlePaymentCreated} onNavigate={setCurrentPage} />;
-    }
-  };
-
   return (
-    <div style={{ width: '100%', height: '100vh', backgroundColor: '#030712', color: '#ffffff', overflow: 'hidden' }}>
-      {renderPage()}
+    <div style={{ 
+      width: '100%', 
+      height: '100vh', 
+      backgroundColor: '#030712', 
+      color: '#ffffff', 
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      fontFamily: 'sans-serif'
+    }}>
+      <h1 style={{ fontSize: '32px', marginBottom: '20px', color: '#10b981' }}>✅ React Funcionando!</h1>
+      <p style={{ fontSize: '18px', color: '#9ca3af' }}>Se você está vendo esta mensagem, o React está carregando.</p>
+      <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '10px' }}>Agora vamos adicionar os componentes...</p>
     </div>
   );
 }
