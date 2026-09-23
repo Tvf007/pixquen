@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Transaction } from '../types';
 import { getTransactions, getTransactionsByDate, getTransactionsByMonth, formatCurrency, formatDate, getTodayString } from '../store';
+import { generateReceiptMessage, logAudit } from '../security';
+import { getConfig } from '../store';
 
 interface RelatoriosProps {
   onViewComprovante: (tx: Transaction) => void;
@@ -26,7 +28,6 @@ export default function Relatorios({ onViewComprovante, onBack }: RelatoriosProp
   }, [view, selectedDate, selectedMonth]);
 
   const completedTxs = transactions.filter(t => t.status === 'completed' || t.status === 'depix_sent');
-  const pendingTxs = transactions.filter(t => t.status === 'pending');
   const totalReceived = completedTxs.reduce((sum, t) => sum + t.amount, 0);
   const totalFees = completedTxs.reduce((sum, t) => sum + (t.feeAmount || 0), 0);
   const totalNet = completedTxs.reduce((sum, t) => sum + (t.netAmount || t.amount), 0);
@@ -36,212 +37,144 @@ export default function Relatorios({ onViewComprovante, onBack }: RelatoriosProp
       ? `Relatório Diário — ${new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR')}`
       : `Relatório Mensal — ${new Date(selectedMonth + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
 
-    const message = `📊 ${period}\n\n` +
-      `💰 Total recebido: ${formatCurrency(totalReceived)}\n` +
-      `📉 Taxas: ${formatCurrency(totalFees)}\n` +
-      `✅ Líquido: ${formatCurrency(totalNet)}\n` +
-      `📋 Transações: ${completedTxs.length} pagas, ${pendingTxs.length} pendentes\n\n` +
-      `Detalhamento:\n` +
-      completedTxs.map(t => `• ${formatCurrency(t.amount)} — ${formatDate(t.createdAt)}`).join('\n');
+    const message = `📊 ${period}\n\n💰 Total: ${formatCurrency(totalReceived)}\n📉 Taxas: ${formatCurrency(totalFees)}\n✅ Líquido: ${formatCurrency(totalNet)}\n📋 Transações: ${completedTxs.length}`;
 
     if (navigator.share) {
       navigator.share({ title: period, text: message });
     } else {
       navigator.clipboard.writeText(message);
-      alert('Relatório copiado para a área de transferência!');
+      alert('Relatório copiado!');
     }
   };
 
-  // Agrupar por dia para visualização mensal
-  const groupedByDay = view === 'monthly'
-    ? completedTxs.reduce((acc, tx) => {
-        const day = tx.createdAt.split('T')[0];
-        if (!acc[day]) acc[day] = [];
-        acc[day].push(tx);
-        return acc;
-      }, {} as Record<string, Transaction[]>)
-    : {};
+  const containerStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    backgroundColor: '#030712',
+    color: '#ffffff',
+    overflow: 'hidden',
+  };
+
+  const headerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 16px',
+    backgroundColor: 'rgba(17, 24, 39, 0.8)',
+    borderBottom: '1px solid #1f2937',
+    flexShrink: 0,
+  };
 
   return (
-    <div className="flex flex-col bg-gray-950 overflow-hidden" style={{ height: '100vh' }}>
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 flex-shrink-0 safe-top">
-        <button onClick={onBack} className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+    <div style={containerStyle}>
+      <header style={headerStyle}>
+        <button onClick={onBack} style={{ padding: '8px', borderRadius: '8px', background: 'transparent', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '20px' }}>
+          ←
         </button>
-        <span className="font-medium text-gray-200">Relatórios</span>
-        <button onClick={shareReport} className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
+        <span style={{ fontWeight: 500, color: '#e5e7eb' }}>Relatórios</span>
+        <button onClick={shareReport} style={{ padding: '8px', borderRadius: '8px', background: 'transparent', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '20px' }}>
+          📤
         </button>
       </header>
-      
-      {/* Conteúdo com scroll */}
-      <div className="flex-1 overflow-y-auto">
 
-      {/* Toggle */}
-      <div className="px-4 pt-4">
-        <div className="flex bg-gray-900 rounded-xl p-1 border border-gray-800">
-          <button
-            onClick={() => setView('daily')}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              view === 'daily' ? 'bg-green-500/20 text-green-400' : 'text-gray-500'
-            }`}
-          >
-            📅 Diário
-          </button>
-          <button
-            onClick={() => setView('monthly')}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              view === 'monthly' ? 'bg-green-500/20 text-green-400' : 'text-gray-500'
-            }`}
-          >
-            📆 Mensal
-          </button>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ padding: '16px' }}>
+          <div style={{ display: 'flex', backgroundColor: '#111827', borderRadius: '12px', padding: '4px', border: '1px solid #1f2937' }}>
+            <button
+              onClick={() => setView('daily')}
+              style={{ flex: 1, padding: '10px', borderRadius: '8px', fontSize: '14px', fontWeight: 500, border: 'none', cursor: 'pointer', backgroundColor: view === 'daily' ? 'rgba(16, 185, 129, 0.2)' : 'transparent', color: view === 'daily' ? '#34d399' : '#6b7280' }}
+            >
+              📅 Diário
+            </button>
+            <button
+              onClick={() => setView('monthly')}
+              style={{ flex: 1, padding: '10px', borderRadius: '8px', fontSize: '14px', fontWeight: 500, border: 'none', cursor: 'pointer', backgroundColor: view === 'monthly' ? 'rgba(16, 185, 129, 0.2)' : 'transparent', color: view === 'monthly' ? '#34d399' : '#6b7280' }}
+            >
+              📆 Mensal
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Date picker */}
-      <div className="px-4 pt-3">
-        {view === 'daily' ? (
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm text-gray-300 focus:outline-none focus:border-green-500/50"
-          />
-        ) : (
-          <input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm text-gray-300 focus:outline-none focus:border-green-500/50"
-          />
-        )}
-      </div>
+        <div style={{ padding: '0 16px 12px' }}>
+          {view === 'daily' ? (
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{ width: '100%', backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px', fontSize: '14px', color: '#d1d5db' }}
+            />
+          ) : (
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              style={{ width: '100%', backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px', fontSize: '14px', color: '#d1d5db' }}
+            />
+          )}
+        </div>
 
-      {/* Summary Cards */}
-      <div className="px-4 pt-4 grid grid-cols-2 gap-3">
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p className="text-xs text-gray-500">Recebido</p>
-          <p className="text-lg font-bold text-green-400 mt-1">{formatCurrency(totalReceived)}</p>
+        <div style={{ padding: '0 16px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '16px' }}>
+            <p style={{ fontSize: '12px', color: '#6b7280' }}>Recebido</p>
+            <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#34d399', marginTop: '4px' }}>{formatCurrency(totalReceived)}</p>
+          </div>
+          <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '16px' }}>
+            <p style={{ fontSize: '12px', color: '#6b7280' }}>Líquido</p>
+            <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#34d399', marginTop: '4px' }}>{formatCurrency(totalNet)}</p>
+          </div>
+          <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '16px' }}>
+            <p style={{ fontSize: '12px', color: '#6b7280' }}>Taxas</p>
+            <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#f87171', marginTop: '4px' }}>{formatCurrency(totalFees)}</p>
+          </div>
+          <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '16px' }}>
+            <p style={{ fontSize: '12px', color: '#6b7280' }}>Transações</p>
+            <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#ffffff', marginTop: '4px' }}>{completedTxs.length}</p>
+          </div>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p className="text-xs text-gray-500">Líquido</p>
-          <p className="text-lg font-bold text-emerald-400 mt-1">{formatCurrency(totalNet)}</p>
-        </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p className="text-xs text-gray-500">Taxas</p>
-          <p className="text-lg font-bold text-red-400 mt-1">{formatCurrency(totalFees)}</p>
-        </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p className="text-xs text-gray-500">Transações</p>
-          <p className="text-lg font-bold text-white mt-1">{completedTxs.length}</p>
-        </div>
-      </div>
 
-      {/* Transactions list */}
-      <div className="px-4 pt-4 pb-6">
-        <h3 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wide">
-          Transações do período
-        </h3>
+        <div style={{ padding: '16px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#9ca3af', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Transações do período
+          </h3>
 
-        {view === 'daily' ? (
-          <div className="space-y-2">
-            {transactions.length === 0 ? (
-              <div className="text-center py-8">
-                <span className="text-3xl block mb-2">📭</span>
-                <p className="text-gray-500 text-sm">Nenhuma transação neste dia</p>
-              </div>
-            ) : (
-              transactions.map(tx => (
-                <button
-                  key={tx.id}
-                  onClick={() => (tx.status === 'completed' || tx.status === 'depix_sent') && onViewComprovante(tx)}
-                  className="w-full text-left bg-gray-900 border border-gray-800 rounded-xl p-3 hover:border-gray-700 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        tx.status === 'completed' || tx.status === 'depix_sent'
-                          ? 'bg-green-500/20'
-                          : tx.status === 'pending'
-                          ? 'bg-yellow-500/20'
-                          : 'bg-gray-500/20'
-                      }`}>
-                        <span className="text-sm">
-                          {tx.status === 'completed' || tx.status === 'depix_sent' ? '✅' : tx.status === 'pending' ? '⏳' : '❌'}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white">{formatCurrency(tx.amount)}</p>
-                        <p className="text-xs text-gray-500">{new Date(tx.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-                      </div>
+          {transactions.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 0' }}>
+              <span style={{ fontSize: '36px', display: 'block', marginBottom: '8px' }}>📭</span>
+              <p style={{ color: '#6b7280', fontSize: '14px' }}>Nenhuma transação neste período</p>
+            </div>
+          ) : (
+            transactions.map(tx => (
+              <button
+                key={tx.id}
+                onClick={() => (tx.status === 'completed' || tx.status === 'depix_sent') && onViewComprovante(tx)}
+                style={{ width: '100%', textAlign: 'left', backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px', marginBottom: '8px', cursor: (tx.status === 'completed' || tx.status === 'depix_sent') ? 'pointer' : 'default' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: tx.status === 'completed' || tx.status === 'depix_sent' ? 'rgba(16, 185, 129, 0.2)' : tx.status === 'pending' ? 'rgba(234, 179, 8, 0.2)' : 'rgba(107, 114, 128, 0.2)' }}>
+                      <span style={{ fontSize: '14px' }}>
+                        {tx.status === 'completed' || tx.status === 'depix_sent' ? '✅' : tx.status === 'pending' ? '⏳' : '❌'}
+                      </span>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      tx.status === 'completed' || tx.status === 'depix_sent'
-                        ? 'bg-green-500/20 text-green-400'
-                        : tx.status === 'pending'
-                        ? 'bg-yellow-500/20 text-yellow-400'
-                        : 'bg-gray-500/20 text-gray-400'
-                    }`}>
-                      {tx.status === 'completed' || tx.status === 'depix_sent' ? 'Pago' : tx.status === 'pending' ? 'Pendente' : tx.status}
-                    </span>
+                    <div>
+                      <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#ffffff' }}>{formatCurrency(tx.amount)}</p>
+                      <p style={{ fontSize: '12px', color: '#6b7280' }}>{new Date(tx.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
                   </div>
-                </button>
-              ))
-            )}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {Object.keys(groupedByDay).length === 0 ? (
-              <div className="text-center py-8">
-                <span className="text-3xl block mb-2">📭</span>
-                <p className="text-gray-500 text-sm">Nenhuma transação neste mês</p>
-              </div>
-            ) : (
-              Object.entries(groupedByDay)
-                .sort(([a], [b]) => b.localeCompare(a))
-                .map(([day, txs]) => {
-                  const dayTotal = txs.reduce((sum, t) => sum + t.amount, 0);
-                  return (
-                    <div key={day} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-                      <div className="flex items-center justify-between px-4 py-3 bg-gray-800/50">
-                        <p className="text-sm font-medium text-gray-300">
-                          {new Date(day + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
-                        </p>
-                        <p className="text-sm font-bold text-green-400">{formatCurrency(dayTotal)}</p>
-                      </div>
-                      <div className="divide-y divide-gray-800/50">
-                        {txs.map(tx => (
-                          <button
-                            key={tx.id}
-                            onClick={() => onViewComprovante(tx)}
-                            className="w-full text-left px-4 py-2.5 hover:bg-gray-800/30 transition-colors flex items-center justify-between"
-                          >
-                            <p className="text-sm text-gray-400">
-                              {new Date(tx.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                            <p className="text-sm font-medium text-white">{formatCurrency(tx.amount)}</p>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })
-            )}
-          </div>
-        )}
-      </div>
+                  <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '12px', backgroundColor: tx.status === 'completed' || tx.status === 'depix_sent' ? 'rgba(16, 185, 129, 0.2)' : tx.status === 'pending' ? 'rgba(234, 179, 8, 0.2)' : 'rgba(107, 114, 128, 0.2)', color: tx.status === 'completed' || tx.status === 'depix_sent' ? '#34d399' : tx.status === 'pending' ? '#facc15' : '#9ca3af' }}>
+                    {tx.status === 'completed' || tx.status === 'depix_sent' ? 'Pago' : tx.status === 'pending' ? 'Pendente' : tx.status}
+                  </span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
 
-        {/* Share button */}
-        <div className="px-4 pb-6">
+        <div style={{ padding: '0 16px 24px' }}>
           <button
             onClick={shareReport}
-            className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-sm hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg shadow-green-500/25"
+            style={{ width: '100%', padding: '12px', background: 'linear-gradient(to right, #10b981, #059669)', color: '#ffffff', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer' }}
           >
             📤 Compartilhar Relatório
           </button>

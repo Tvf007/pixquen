@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Page, Transaction } from './types';
 import Maquininha from './components/Maquininha';
 import Pagamento from './components/Pagamento';
@@ -49,7 +49,7 @@ function App() {
   };
 
   return (
-    <div className="h-screen bg-gray-950 text-white overflow-hidden" style={{ height: '100vh' }}>
+    <div style={{ width: '100%', height: '100vh', backgroundColor: '#030712', color: '#ffffff', overflow: 'hidden' }}>
       {renderPage()}
     </div>
   );
