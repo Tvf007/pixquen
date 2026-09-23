@@ -63,9 +63,9 @@ export default function Relatorios({ onViewComprovante, onBack }: RelatoriosProp
     : {};
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="h-[100dvh] flex flex-col bg-gray-950 overflow-hidden">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-10">
+      <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 flex-shrink-0 safe-top">
         <button onClick={onBack} className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">
           <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -78,6 +78,9 @@ export default function Relatorios({ onViewComprovante, onBack }: RelatoriosProp
           </svg>
         </button>
       </header>
+      
+      {/* Conteúdo com scroll */}
+      <div className="flex-1 overflow-y-auto">
 
       {/* Toggle */}
       <div className="px-4 pt-4">
@@ -234,14 +237,15 @@ export default function Relatorios({ onViewComprovante, onBack }: RelatoriosProp
         )}
       </div>
 
-      {/* Share button */}
-      <div className="px-4 pb-6">
-        <button
-          onClick={shareReport}
-          className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-sm hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg shadow-green-500/25"
-        >
-          📤 Compartilhar Relatório
-        </button>
+        {/* Share button */}
+        <div className="px-4 pb-6">
+          <button
+            onClick={shareReport}
+            className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-sm hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg shadow-green-500/25"
+          >
+            📤 Compartilhar Relatório
+          </button>
+        </div>
       </div>
     </div>
   );

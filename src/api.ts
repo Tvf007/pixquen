@@ -120,34 +120,4 @@ export async function getAccountInfo() {
   return response.json();
 }
 
-// Modo demonstração - simula a API quando não há chave configurada
-export function createDemoDeposit(amount: number): DepositResponse {
-  const id = 'demo_' + Date.now().toString(36);
-  return {
-    success: true,
-    message: 'Depósito criado (modo demonstração)',
-    data: {
-      id,
-      amount,
-      fee_percent: 2.0,
-      fee_amount: amount * 0.02,
-      net_amount: amount * 0.98,
-      status: 'pending',
-      pix_qr_code: `00020126580014br.gov.bcb.pix0136${id}5204000053039865802BR5925${getConfig().businessName || 'MINHA LOJA'}6009SAO PAULO62070503***6304ABCD`,
-      pix_qr_code_base64: '',
-      expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-    },
-  };
-}
-
-export function simulatePayment(): DepositStatusResponse {
-  return {
-    success: true,
-    data: {
-      id: 'demo',
-      amount: 0,
-      status: 'depix_sent',
-      confirmed_at: new Date().toISOString(),
-    },
-  };
-}
+// Fim do arquivo

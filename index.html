@@ -1,103 +1,101 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Maquininha PIX - Cobranças e Pagamentos</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#030712" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Maquininha PIX" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="description" content="Maquininha PIX - Gerador de cobranças via API BuyPix" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Ícones PWA -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    
+    <title>Maquininha PIX</title>
+    
     <style>
-      /* 内联样式确保主题色立即生效，避免闪烁 */
-      html,
-      body {
+      /* Estilos inline para evitar flash */
+      * {
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      html, body {
         width: 100%;
         height: 100%;
-      }
-      html.light,
-      html.light body {
-        background-color: #030712 !important;
+        height: 100dvh;
+        overflow: hidden;
+        background-color: #030712;
         color: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overscroll-behavior: none;
+        touch-action: manipulation;
       }
-      html.dark,
-      html.dark body {
-        background-color: #030712 !important;
-        color: #ffffff;
+      
+      #root {
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
+        overflow: hidden;
+      }
+      
+      /* Loading screen */
+      .loading-screen {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100dvh;
+        background: #030712;
+        color: white;
+      }
+      
+      .loading-content {
+        text-align: center;
+      }
+      
+      .loading-logo {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: bold;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+      }
+      
+      /* Safe area para notch/home indicator */
+      @supports (padding: max(0px)) {
+        .safe-top { padding-top: max(0px, env(safe-area-inset-top)); }
+        .safe-bottom { padding-bottom: max(0px, env(safe-area-inset-bottom)); }
       }
     </style>
-    <script>
-      // Aplicar tema dark imediatamente para evitar tela branca
-      (function () {
-        function applyThemeToDOM(theme) {
-          document.documentElement.classList.remove("light", "dark");
-          document.documentElement.classList.add(theme);
-          document.documentElement.setAttribute("data-theme", theme);
-        }
-
-        // Sempre aplicar tema dark como padrão
-        applyThemeToDOM("dark");
-
-        // Se estiver em iframe, também ouvir mensagens do pai
-        try {
-          if (window.self !== window.top) {
-            window.addEventListener("message", function (event) {
-              if (event.data && typeof event.data.theme === "string") {
-                const theme = event.data.theme;
-                if (theme === "light" || theme === "dark") {
-                  applyThemeToDOM(theme);
-                }
-              }
-            });
-          }
-        } catch (e) {
-          // Ignorar erros de cross-origin
-        }
-      })();
-    </script>
-      <script>
-      (function () {
-        if (window.self === window.top) return;
-        var reported = {};
-        window.addEventListener("error", function (event) {
-          // 资源加载失败的 error 事件没有 message，此处仅上报 JS 运行时错误
-          if (!event || !event.message) return;
-          var key =
-            event.message + "|" + (event.filename || "") + "|" + (event.lineno || 0);
-          if (reported[key]) return; // 相同错误只上报一次，避免渲染循环刷屏
-          reported[key] = true;
-          try {
-            window.parent.postMessage(
-              {
-                type: "sandbox-runtime-error",
-                payload: {
-                  message: String(event.message).slice(0, 500),
-                  filename: event.filename || "",
-                  lineno: event.lineno || 0,
-                  colno: event.colno || 0,
-                  stack:
-                    event.error && event.error.stack
-                      ? String(event.error.stack).slice(0, 2000)
-                      : ""
-                }
-              },
-              "*"
-            );
-          } catch (e) {
-            /* 上报失败不影响页面运行 */
-          }
-        });
-      })();
-    </script>
   </head>
   <body>
     <div id="root">
-      <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #030712; color: white; font-family: system-ui, sans-serif;">
-        <div style="text-align: center;">
-          <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
-          <div>Carregando Maquininha PIX...</div>
+      <div class="loading-screen">
+        <div class="loading-content">
+          <div class="loading-logo">PIX</div>
+          <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Maquininha PIX</div>
+          <div style="font-size: 14px; color: #6b7280;">Carregando...</div>
         </div>
       </div>
     </div>

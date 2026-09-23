@@ -119,7 +119,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="h-[100dvh] bg-gray-950 text-white overflow-hidden">
       {renderPage()}
     </div>
   );
