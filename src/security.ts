@@ -46,7 +46,7 @@ const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
   sessionTimeout: 30,
   maxTransactionsPerHour: 50,
   maxAmountPerTransaction: 50000,
-  minAmountPerTransaction: 1,
+  minAmountPerTransaction: 50, // Valor mínimo de R$ 50,00
   requireConfirmation: true,
   enableAuditLog: true,
   maskSensitiveData: true,

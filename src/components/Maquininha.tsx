@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Page } from '../types';
 import { formatCurrency } from '../store';
+import { getSecurityConfig } from '../security';
 
 interface MaquininhaProps {
   onPaymentCreated: (amount: number) => void;
@@ -38,12 +39,24 @@ export default function Maquininha({ onPaymentCreated, onNavigate }: MaquininhaP
 
   const handleConfirm = () => {
     const amount = parseFloat(value);
-    if (amount >= 1) {
-      onPaymentCreated(amount);
+    const config = getSecurityConfig();
+    
+    if (amount < config.minAmountPerTransaction) {
+      alert(`⚠️ Valor mínimo: R$ ${config.minAmountPerTransaction.toFixed(2)}\n\nO valor da cobrança deve ser igual ou superior a R$ ${config.minAmountPerTransaction.toFixed(2)}.`);
+      return;
     }
+    
+    if (amount > config.maxAmountPerTransaction) {
+      alert(`⚠️ Valor máximo: R$ ${config.maxAmountPerTransaction.toFixed(2)}\n\nO valor da cobrança excede o limite permitido.`);
+      return;
+    }
+    
+    onPaymentCreated(amount);
   };
 
   const numericValue = parseFloat(value) || 0;
+  const config = getSecurityConfig();
+  const isValidAmount = numericValue >= config.minAmountPerTransaction && numericValue <= config.maxAmountPerTransaction;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-950">
@@ -96,9 +109,14 @@ export default function Maquininha({ onPaymentCreated, onNavigate }: MaquininhaP
             {numericValue.toFixed(2)}
           </span>
         </div>
-        {numericValue > 0 && (
-          <p className="text-gray-600 text-xs mt-3">
-            {value.length < 4 ? 'Digite o valor' : formatCurrency(numericValue)}
+        {numericValue > 0 && numericValue < config.minAmountPerTransaction && (
+          <p className="text-red-400 text-xs mt-3 animate-pulse">
+            ⚠️ Valor mínimo: {formatCurrency(config.minAmountPerTransaction)}
+          </p>
+        )}
+        {numericValue >= config.minAmountPerTransaction && (
+          <p className="text-green-400 text-xs mt-3">
+            ✓ Valor válido para cobrança
           </p>
         )}
       </div>
@@ -120,6 +138,13 @@ export default function Maquininha({ onPaymentCreated, onNavigate }: MaquininhaP
             </button>
           ))}
         </div>
+        
+        {/* Aviso de valor mínimo */}
+        <div className="max-w-xs mx-auto mt-3 px-3 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+          <p className="text-[10px] text-yellow-400 text-center">
+            💡 Valor mínimo para cobrança: <strong>R$ 50,00</strong>
+          </p>
+        </div>
 
         {/* Botões de ação */}
         <div className="flex gap-3 mt-4 max-w-xs mx-auto">
@@ -131,10 +156,10 @@ export default function Maquininha({ onPaymentCreated, onNavigate }: MaquininhaP
           </button>
           <button
             onClick={handleConfirm}
-            disabled={numericValue < 1}
+            disabled={!isValidAmount}
             className="flex-[2] h-12 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-sm transition-all shadow-lg shadow-green-500/25 hover:from-green-600 hover:to-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
           >
-            COBRAR {numericValue >= 1 ? formatCurrency(numericValue) : ''}
+            {isValidAmount ? `COBRAR ${formatCurrency(numericValue)}` : `MÍNIMO ${formatCurrency(config.minAmountPerTransaction)}`}
           </button>
         </div>
       </div>

@@ -240,10 +240,26 @@ export default function Configuracoes({ onBack }: ConfiguracoesProps) {
                 />
               </div>
               <div>
+                <label className="text-xs text-gray-500 mb-1 block">Valor mínimo por transação (R$)</label>
+                <input
+                  type="number"
+                  min={50}
+                  value={securityConfig.minAmountPerTransaction}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (value >= 50) {
+                      setSecurityConfig({ ...securityConfig, minAmountPerTransaction: value });
+                    }
+                  }}
+                  className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-green-500/50"
+                />
+                <p className="text-[10px] text-gray-600 mt-1">Mínimo permitido: R$ 50,00</p>
+              </div>
+              <div>
                 <label className="text-xs text-gray-500 mb-1 block">Valor máximo por transação (R$)</label>
                 <input
                   type="number"
-                  min={1}
+                  min={50}
                   value={securityConfig.maxAmountPerTransaction}
                   onChange={(e) => setSecurityConfig({ ...securityConfig, maxAmountPerTransaction: parseFloat(e.target.value) || 50000 })}
                   className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-green-500/50"
