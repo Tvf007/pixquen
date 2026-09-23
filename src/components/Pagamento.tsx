@@ -136,7 +136,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
 
   if (loading) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden">
+      <div className="flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden" style={{ height: '100vh' }}>
         <div className="w-16 h-16 border-4 border-green-500/30 border-t-green-500 rounded-full animate-spin mb-6"></div>
         <p className="text-gray-400 text-lg">Gerando cobrança...</p>
         <p className="text-gray-600 text-sm mt-2">{formatCurrency(amount)}</p>
@@ -146,7 +146,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
 
   if (error) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden">
+      <div className="flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden" style={{ height: '100vh' }}>
         <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
           <span className="text-3xl">❌</span>
         </div>
@@ -161,7 +161,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
 
   if (paid) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden">
+      <div className="flex flex-col items-center justify-center bg-gray-950 px-6 overflow-hidden" style={{ height: '100vh' }}>
         <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
           <span className="text-4xl">✅</span>
         </div>
@@ -182,7 +182,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gray-950 overflow-hidden">
+    <div className="flex flex-col bg-gray-950 overflow-hidden" style={{ height: '100vh' }}>
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800">
         <button onClick={onBack} className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">
@@ -259,6 +259,17 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
             className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors border border-gray-700"
           >
             {copied ? '✅ Link copiado!' : '🔗 Copiar link de pagamento'}
+          </button>
+
+          <button
+            onClick={() => {
+              if (!transaction) return;
+              const link = `${window.location.origin}?pay=${transaction.depositId}&amount=${transaction.amount}`;
+              window.open(link, '_blank');
+            }}
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+          >
+            🌐 Abrir link de pagamento
           </button>
 
           <button
