@@ -1,4 +1,5 @@
 import { getConfig } from './store';
+import { generateIdempotencyKey, logAudit, sanitizeAmount } from './security';
 
 const BASE_URL = 'https://buypix.me/api/v1';
 
@@ -45,15 +46,26 @@ export async function createDeposit(params: CreateDepositParams): Promise<Deposi
     throw new Error('API Key não configurada. Vá em Configurações.');
   }
 
+  // Validar amount
+  const safeAmount = sanitizeAmount(params.amount);
+  if (safeAmount === null) {
+    throw new Error('Valor inválido. Verifique o valor da cobrança.');
+  }
+
+  // Gerar idempotency key segura
+  const idempotencyKey = generateIdempotencyKey();
+
+  logAudit('api_call', `POST /deposits - Amount: R$ ${safeAmount}`, 'info');
+
   const response = await fetch(`${BASE_URL}/deposits`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${config.apiKey}`,
       'Content-Type': 'application/json',
-      'X-Idempotency-Key': crypto.randomUUID(),
+      'X-Idempotency-Key': idempotencyKey,
     },
     body: JSON.stringify({
-      amount: params.amount,
+      amount: safeAmount,
       payer_document: params.payerDocument || '00000000000',
       payer_name: params.payerName || 'Cliente',
       webhook_url: params.webhookUrl || config.webhookUrl,

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Transaction } from '../types';
 import { createDeposit, createDemoDeposit, getDepositStatus, simulatePayment } from '../api';
 import { getConfig, saveTransaction, updateTransaction, formatCurrency, generateId } from '../store';
+import { generateShareMessage, checkRateLimit, logAudit, sanitizeString } from '../security';
 
 interface PagamentoProps {
   amount: number;
@@ -27,6 +28,14 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
 
   const initiatePayment = async () => {
     setLoading(true);
+    
+    // Verificar rate limiting
+    if (!checkRateLimit('transaction')) {
+      setError('Limite de transações por hora excedido. Aguarde antes de criar nova cobrança.');
+      setLoading(false);
+      return;
+    }
+    
     try {
       let response;
       if (isDemo) {
@@ -51,6 +60,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
         };
         setTransaction(tx);
         saveTransaction(tx);
+        logAudit('payment_created', `Cobrança criada: ${formatCurrency(amount)} - ID: ${tx.depositId}`, 'info');
 
         // Iniciar polling para verificar pagamento
         startPolling(response.data.id);
@@ -89,6 +99,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
               completedAt: statusResponse.data.confirmed_at || new Date().toISOString(),
             });
             setTransaction(prev => prev ? { ...prev, status: 'completed', completedAt: new Date().toISOString() } : null);
+            logAudit('payment_confirmed', `Pagamento confirmado: ${formatCurrency(transaction!.amount)} - ID: ${transaction!.depositId}`, 'info');
             if (pollRef.current) clearInterval(pollRef.current);
           } else if (['canceled', 'expired', 'error'].includes(newStatus)) {
             updateTransaction(transaction!.id, { status: newStatus });
@@ -104,22 +115,26 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
 
   const shareLink = () => {
     if (!transaction) return;
+    const config = getConfig();
     const link = `${window.location.origin}?pay=${transaction.depositId}&amount=${transaction.amount}`;
-    const message = `💰 Pagamento de ${formatCurrency(transaction.amount)}\n\nPague via PIX usando o link:\n${link}\n\nOu escaneie o QR Code na tela.`;
+    const messages = generateShareMessage(transaction.amount, link, config.businessName);
     
     if (navigator.share) {
-      navigator.share({ title: 'Pagamento PIX', text: message, url: link });
+      navigator.share({ title: 'Pagamento PIX', text: messages.generic, url: link });
     } else {
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(messages.whatsapp)}`;
       window.open(whatsappUrl, '_blank');
     }
+    logAudit('payment_link_shared', `Link compartilhado: ${transaction.depositId}`, 'info');
   };
 
   const shareWhatsApp = () => {
     if (!transaction) return;
+    const config = getConfig();
     const link = `${window.location.origin}?pay=${transaction.depositId}&amount=${transaction.amount}`;
-    const message = `💰 Pagamento de ${formatCurrency(transaction.amount)}\n\nPague via PIX:\n${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    const messages = generateShareMessage(transaction.amount, link, config.businessName);
+    window.open(`https://wa.me/?text=${encodeURIComponent(messages.whatsapp)}`, '_blank');
+    logAudit('payment_whatsapp_shared', `WhatsApp compartilhado: ${transaction.depositId}`, 'info');
   };
 
   const copyLink = () => {
@@ -128,6 +143,7 @@ export default function Pagamento({ amount, onBack }: PagamentoProps) {
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    logAudit('payment_link_copied', `Link copiado: ${transaction.depositId}`, 'info');
   };
 
   const copyPixCode = () => {

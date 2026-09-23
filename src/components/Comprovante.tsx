@@ -1,5 +1,6 @@
 import { Transaction } from '../types';
 import { formatCurrency, formatDate, getConfig } from '../store';
+import { generateReceiptMessage, logAudit } from '../security';
 
 interface ComprovanteProps {
   transaction: Transaction;
@@ -10,40 +11,34 @@ export default function Comprovante({ transaction, onBack }: ComprovanteProps) {
   const config = getConfig();
 
   const shareComprovante = () => {
-    const message =
-      `✅ COMPROVANTE DE PAGAMENTO\n\n` +
-      `🏪 ${config.businessName || 'Minha Loja'}\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `💰 Valor: ${formatCurrency(transaction.amount)}\n` +
-      `📅 Data: ${formatDate(transaction.completedAt || transaction.createdAt)}\n` +
-      `📋 ID: ${transaction.depositId}\n` +
-      `✅ Status: Pago via PIX\n\n` +
-      (transaction.feeAmount ? `📉 Taxa: ${formatCurrency(transaction.feeAmount)}\n` : '') +
-      (transaction.netAmount ? `✅ Líquido: ${formatCurrency(transaction.netAmount)}\n\n` : '\n') +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `Comprovante gerado pela Maquininha PIX`;
+    const message = generateReceiptMessage(
+      transaction.amount,
+      transaction.completedAt || transaction.createdAt,
+      transaction.depositId,
+      config.businessName,
+      transaction.feeAmount,
+      transaction.netAmount
+    );
 
     if (navigator.share) {
       navigator.share({ title: 'Comprovante de Pagamento', text: message });
     } else {
       navigator.clipboard.writeText(message);
     }
+    logAudit('receipt_shared', `Comprovante compartilhado: ${transaction.depositId}`, 'info');
   };
 
   const shareWhatsApp = () => {
-    const message =
-      `✅ *COMPROVANTE DE PAGAMENTO*\n\n` +
-      `🏪 *${config.businessName || 'Minha Loja'}*\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `💰 Valor: *${formatCurrency(transaction.amount)}*\n` +
-      `📅 Data: ${formatDate(transaction.completedAt || transaction.createdAt)}\n` +
-      `📋 ID: ${transaction.depositId}\n` +
-      `✅ Status: *Pago via PIX*\n\n` +
-      (transaction.feeAmount ? `📉 Taxa: ${formatCurrency(transaction.feeAmount)}\n` : '') +
-      (transaction.netAmount ? `✅ Líquido: ${formatCurrency(transaction.netAmount)}\n\n` : '\n') +
-      `━━━━━━━━━━━━━━━━━━━━`;
-
+    const message = generateReceiptMessage(
+      transaction.amount,
+      transaction.completedAt || transaction.createdAt,
+      transaction.depositId,
+      config.businessName,
+      transaction.feeAmount,
+      transaction.netAmount
+    );
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    logAudit('receipt_whatsapp_shared', `Comprovante WhatsApp: ${transaction.depositId}`, 'info');
   };
 
   return (

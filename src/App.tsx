@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Page, Transaction } from './types';
 import Maquininha from './components/Maquininha';
 import Pagamento from './components/Pagamento';
@@ -6,11 +6,31 @@ import Historico from './components/Historico';
 import Relatorios from './components/Relatorios';
 import Comprovante from './components/Comprovante';
 import Configuracoes from './components/Configuracoes';
+import { startSession, renewSession, applySecurityHeaders, logAudit, isFramed } from './security';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('maquininha');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [currentAmount, setCurrentAmount] = useState(0);
+
+  // Inicializar segurança
+  useEffect(() => {
+    applySecurityHeaders();
+    startSession();
+    logAudit('app_started', 'Aplicativo iniciado', 'info');
+
+    // Renova sessão periodicamente
+    const interval = setInterval(() => {
+      renewSession();
+    }, 5 * 60 * 1000); // a cada 5 minutos
+
+    // Proteger contra clickjacking
+    if (isFramed()) {
+      logAudit('framed_detected', 'Aplicativo detectado em iframe', 'warning');
+    }
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handlePaymentCreated = (amount: number) => {
     setCurrentAmount(amount);
